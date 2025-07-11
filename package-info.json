@@ -1,0 +1,29 @@
+{
+    "name" : "Voxel",
+    "description" : "Externals for generating and manipulating voxel grids.",
+    "author" : "Aidan Byrnes",
+    "tags" : [ "jitter", "graphics", "spatialization" ],
+    "homepatcher" : "",
+    "filelist" :     {
+        "externals" : [],
+        "help" : [],
+        "extras" : []
+    },
+    "max_version_max" : "none",
+    "max_version_min" : "8.0.0",
+    "os" :     {
+        "macintosh" :         {
+            "platform" : [ "x64", "arm64" ],
+            "min_version" : "10.13.x"
+        }
+,
+        "windows" :         {
+            "platform" : [ "x64" ],
+            "min_version" : "10"
+        }
+
+    }
+,
+    "version" : "0.0.1",
+    "website" : "https://github.com/aidanbyrnes/voxel-maxmsp"
+}
