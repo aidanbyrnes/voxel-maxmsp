@@ -1,5 +1,5 @@
 {
-    "name" : "Voxel",
+    "name" : "voxel",
     "description" : "Externals for generating and manipulating voxel grids.",
     "author" : "Aidan Byrnes",
     "tags" : [ "jitter", "graphics", "spatialization" ],
@@ -13,7 +13,7 @@
     "max_version_min" : "8.0.0",
     "os" :     {
         "macintosh" :         {
-            "platform" : [ "x64", "arm64" ],
+            "platform" : [ "x64", "aarch64" ],
             "min_version" : "10.13.x"
         }
 ,
