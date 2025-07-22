@@ -171,9 +171,9 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
                 index = grid_z * (x->size * x->size) + grid_y * x->size + grid_x;
 
                 if (x->normalize_out) {
-                    grid_x /= (float)x->size;
-                    grid_y /= (float)x->size;
-                    grid_z /= (float)x->size;
+                    grid_x /= (float)x->size - 1;
+                    grid_y /= (float)x->size - 1;
+                    grid_z /= (float)x->size - 1;
                 }
 
                 if (index >= 0 && index < out_size) {
