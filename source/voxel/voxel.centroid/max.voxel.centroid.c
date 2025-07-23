@@ -31,7 +31,9 @@ void ext_main(void *r) {
     jit_class = jit_class_findbyname(gensym("centroid"));
     max_jit_class_mop_wrap(max_class, jit_class,
                            MAX_JIT_MOP_FLAGS_OWN_BANG |
-                           MAX_JIT_MOP_FLAGS_OWN_OUTPUTMATRIX);
+                           MAX_JIT_MOP_FLAGS_OWN_OUTPUTMATRIX |
+                           MAX_JIT_MOP_FLAGS_OWN_ADAPT |
+                           MAX_JIT_MOP_FLAGS_OWN_OUTPUTMODE);
     max_jit_classex_mop_mproc(max_class, jit_class, max_centroid_mproc);
     max_jit_class_wrap_standard(max_class, jit_class, 0);
 
