@@ -24,7 +24,7 @@ void ext_main(void *r) {
     max_jit_class_obex_setup(max_class, calcoffset(t_max_pcloud2grid, obex));
 
     jit_class = jit_class_findbyname(gensym("pcloud2grid"));
-    max_jit_class_mop_wrap(max_class, jit_class, 0);
+    max_jit_class_mop_wrap(max_class, jit_class,  MAX_JIT_MOP_FLAGS_OWN_ADAPT | MAX_JIT_MOP_FLAGS_OWN_OUTPUTMODE);
     max_jit_class_wrap_standard(max_class, jit_class, 0);
 
     class_addmethod(max_class, (method)max_jit_mop_assist, "assist", A_CANT, 0);
@@ -46,7 +46,13 @@ void * max_pcloud2grid_new(t_symbol *s, long argc, t_atom *argv) {
         o = jit_object_new(gensym("pcloud2grid"));
 
         if (o) {
-            max_jit_mop_setup_simple(x, o, argc, argv);
+            //We do not care about passing args to MOP
+            max_jit_mop_setup_simple(x, o, 0, NULL);
+            
+            if(argc > 0 && atom_gettype(argv) == A_LONG){
+                max_jit_attr_set(x, gensym("size"), argc, argv);
+            }
+            
             max_jit_attr_args(x, argc, argv);
         } else {
             jit_object_error((t_object *)x, "voxel.pcloud2grid: could not allocate object");

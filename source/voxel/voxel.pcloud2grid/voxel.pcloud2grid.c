@@ -34,10 +34,10 @@ t_jit_err pcloud2grid_init(void) {
     jit_class_addmethod(_pcloud2grid_class, (method)pcloud2grid_clear, "clear", 0L); // Add the clear method
 
     // attributes
-    attr = jit_object_new(_jit_sym_jit_attr_offset, "grid_size", _jit_sym_long, attrflags,
+    attr = jit_object_new(_jit_sym_jit_attr_offset, "size", _jit_sym_long, attrflags,
                           (method)NULL, (method)NULL, calcoffset(t_pcloud2grid, size));
     jit_class_addattr(_pcloud2grid_class, attr);
-    CLASS_ATTR_LABEL(_pcloud2grid_class, "grid_size", 0, "Grid size");
+    CLASS_ATTR_LABEL(_pcloud2grid_class, "size", 0, "Grid size");
 
     attr = jit_object_new(_jit_sym_jit_attr_offset, "normalize_out", _jit_sym_long, attrflags,
                           (method)NULL, (method)NULL, calcoffset(t_pcloud2grid, normalize_out));
@@ -72,7 +72,6 @@ t_pcloud2grid *pcloud2grid_new(void) {
 }
 
 void pcloud2grid_free(t_pcloud2grid *x) {
-    jit_object_free(x->out_matrix);
 }
 
 void pcloud2grid_clear(t_pcloud2grid *x) {
