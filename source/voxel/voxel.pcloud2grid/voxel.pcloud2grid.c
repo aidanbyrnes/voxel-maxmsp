@@ -3,7 +3,6 @@
 typedef struct _pcloud2grid {
     t_object ob;
     long size;
-    long normalize_out;
     long autoclear;
     void *out_matrix;
 } t_pcloud2grid;
@@ -39,12 +38,6 @@ t_jit_err pcloud2grid_init(void) {
     jit_class_addattr(_pcloud2grid_class, attr);
     CLASS_ATTR_LABEL(_pcloud2grid_class, "size", 0, "Grid size");
 
-    attr = jit_object_new(_jit_sym_jit_attr_offset, "normalize_out", _jit_sym_long, attrflags,
-                          (method)NULL, (method)NULL, calcoffset(t_pcloud2grid, normalize_out));
-    jit_class_addattr(_pcloud2grid_class, attr);
-    CLASS_ATTR_LABEL(_pcloud2grid_class, "normalize_out", 0, "Normalize output");
-    CLASS_ATTR_STYLE(_pcloud2grid_class, "normalize_out", 0, "onoff");
-
     attr = jit_object_new(_jit_sym_jit_attr_offset, "autoclear", _jit_sym_long, attrflags,
                           (method)NULL, (method)NULL, calcoffset(t_pcloud2grid, autoclear));
     jit_class_addattr(_pcloud2grid_class, attr);
@@ -61,7 +54,6 @@ t_pcloud2grid *pcloud2grid_new(void) {
 
     if ((x = (t_pcloud2grid *)jit_object_alloc(_pcloud2grid_class))) {
         x->size = 1;
-        x->normalize_out = 1;
         x->autoclear = 1;
         x->out_matrix = NULL;
     } else {
@@ -126,7 +118,7 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
     }
 
     long out_size = x->size * x->size * x->size;
-    int p_count = 3;
+    int p_count = 1;
 
     out_minfo.type = _jit_sym_float32;
     out_minfo.dimcount = 1;
@@ -159,26 +151,18 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
             for (i = 0; i < width; i++) {
                 fip = (float *)(in_bp + (j * in_minfo.dimstride[1]) + (i * in_minfo.dimstride[0]));
 
-                float grid_x = (int)(fip[0] * x->size);
-                float grid_y = (int)(fip[1] * x->size);
-                float grid_z = (int)(fip[2] * x->size);
+                long grid_x = (long)(fip[0] * x->size);
+                long grid_y = (long)(fip[1] * x->size);
+                long grid_z = (long)(fip[2] * x->size);
 
                 grid_x = MAX(0, MIN(grid_x, x->size - 1));
                 grid_y = MAX(0, MIN(grid_y, x->size - 1));
                 grid_z = MAX(0, MIN(grid_z, x->size - 1));
 
-                index = grid_z * (x->size * x->size) + grid_y * x->size + grid_x;
-
-                if (x->normalize_out) {
-                    grid_x /= (float)x->size - 1;
-                    grid_y /= (float)x->size - 1;
-                    grid_z /= (float)x->size - 1;
-                }
+                index = grid_x + grid_y * x->size + grid_z * (x->size * x->size);
 
                 if (index >= 0 && index < out_size) {
-                    fop[index * p_count] = grid_x;
-                    fop[index * p_count + 1] = grid_y;
-                    fop[index * p_count + 2] = grid_z;
+                    fop[index] = 1;
                 }
             }
         }
