@@ -77,7 +77,7 @@ void pcloud2grid_clear(t_pcloud2grid *x) {
         jit_object_method(x->out_matrix, _jit_sym_getdata, &out_bp);
 
         if (out_bp) {
-            size = out_minfo.dim[0] * out_minfo.planecount;
+            size = out_minfo.dim[0] * out_minfo.dim[1] * out_minfo.dim[2];
             fop = (float *)out_bp;
             for (i = 0; i < size; i++) {
                 fop[i] = 0.0f;
@@ -117,12 +117,13 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
         in_dim[i] = in_minfo.dim[i];
     }
 
-    long out_size = x->size * x->size * x->size;
     int p_count = 1;
 
     out_minfo.type = _jit_sym_float32;
-    out_minfo.dimcount = 1;
-    out_minfo.dim[0] = out_size;
+    out_minfo.dimcount = 3;
+    out_minfo.dim[0] = x->size;
+    out_minfo.dim[1] = x->size;
+    out_minfo.dim[2] = x->size;
     out_minfo.planecount = p_count;
     out_minfo.flags = 0;
 
@@ -151,19 +152,20 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
             for (i = 0; i < width; i++) {
                 fip = (float *)(in_bp + (j * in_minfo.dimstride[1]) + (i * in_minfo.dimstride[0]));
 
-                long grid_x = (long)(fip[0] * x->size);
-                long grid_y = (long)(fip[1] * x->size);
-                long grid_z = (long)(fip[2] * x->size);
+                long grid_x = (long)(fip[0] * out_minfo.dim[0]);
+                long grid_y = (long)(fip[1] * out_minfo.dim[1]);
+                long grid_z = (long)(fip[2] * out_minfo.dim[2]);
 
-                grid_x = MAX(0, MIN(grid_x, x->size - 1));
-                grid_y = MAX(0, MIN(grid_y, x->size - 1));
-                grid_z = MAX(0, MIN(grid_z, x->size - 1));
+                grid_x = MAX(0, MIN(grid_x, out_minfo.dim[0] - 1));
+                grid_y = MAX(0, MIN(grid_y, out_minfo.dim[1] - 1));
+                grid_z = MAX(0, MIN(grid_z, out_minfo.dim[2] - 1));
+                
+                index = grid_x + grid_y * out_minfo.dim[0] + grid_z * out_minfo.dim[1] * out_minfo.dim[1];
 
-                index = grid_x + grid_y * x->size + grid_z * (x->size * x->size);
-
-                if (index >= 0 && index < out_size) {
+                if (index >= 0 && index < (out_minfo.dim[0] * out_minfo.dim[1] * out_minfo.dim[2])) {
                     fop[index] = 1;
                 }
+                
             }
         }
     }

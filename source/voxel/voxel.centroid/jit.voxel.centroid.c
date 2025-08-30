@@ -10,7 +10,6 @@ t_jit_err centroid_init(void);
 t_centroid *centroid_new(void);
 void centroid_free(t_centroid *x);
 t_jit_err centroid_matrix_calc(t_centroid *x, void *inputs, void *outputs);
-void indexToXYZ(int index, int *x, int *y, int *z, int sizeX, int sizeY);
 END_USING_C_LINKAGE
 
 static void *_centroid_class = NULL;
@@ -65,7 +64,6 @@ t_jit_err centroid_matrix_calc(t_centroid *x, void *inputs, void *outputs) {
     float *fip;
     long in_dimcount, in_planecount, in_length;
     int vox_x, vox_y, vox_z;
-    int size;
     float weight;
     float samples = 0;
 
@@ -84,7 +82,7 @@ t_jit_err centroid_matrix_calc(t_centroid *x, void *inputs, void *outputs) {
     
     in_dimcount = in_minfo.dimcount;
     in_planecount = in_minfo.planecount;
-    in_length = in_minfo.dim[0];
+    in_length = in_minfo.dim[0] * in_minfo.dim[1] * in_minfo.dim[2];
     
     if(in_minfo.type != _jit_sym_float32){ return err; }
 
@@ -93,56 +91,49 @@ t_jit_err centroid_matrix_calc(t_centroid *x, void *inputs, void *outputs) {
         x->mean[j] = 0.0f;
     }
     
-    //Get length per side assuming cubic grid
-    size = cbrt(in_length);
-    
     in_bp = (char *)in_mdata;
+    
+    if(in_dimcount == 3 && in_planecount == 1){
+        long index = 0;
+        for(vox_z = 0; vox_z < in_minfo.dim[2]; vox_z++){
+            for(vox_y = 0; vox_y < in_minfo.dim[1]; vox_y++){
+                for(vox_x = 0; vox_x < in_minfo.dim[0]; vox_x++){
+                    fip = (float *)(in_bp + index * in_minfo.dimstride[0]);
+                    weight = fip[0];
 
-    if (in_dimcount == 1 && in_planecount >= 1) {
-        if(in_planecount < 4){
-            for (int i = 0; i < in_length; i++) {
-                fip = (float *)(in_bp + (i * in_minfo.dimstride[0]));
-                
-                weight = fip[0];
-                if(weight <= 0){ continue; }
-                
-                indexToXYZ(i, &vox_x, &vox_y, &vox_z, size, size);
-                
-                x->mean[0] += (float)vox_x * weight / (size - 1);
-                x->mean[1] += (float)vox_y * weight / (size - 1);
-                x->mean[2] += (float)vox_z * weight / (size - 1);
-                
-                samples += weight;
+                    if(weight > 0){
+                        x->mean[0] += ((float)vox_x / in_minfo.dim[0] + 1.0f / in_minfo.dim[0] * .5f) * weight;
+                        x->mean[1] += ((float)vox_y / in_minfo.dim[1] + 1.0f / in_minfo.dim[1] * .5f) * weight;
+                        x->mean[2] += ((float)vox_z / in_minfo.dim[2] + 1.0f / in_minfo.dim[2] * .5f) * weight;
+                        
+                        samples += weight;
+                    }
+                    
+                    index++;
+                }
             }
         }
-        else{
-            for (int i = 0; i < in_length; i++) {
-                fip = (float *)(in_bp + (i * in_minfo.dimstride[0]));
-                
-                weight = fip[3];
-                if(weight <= 0){ continue; }
-                
-                x->mean[0] += fip[0] * weight;
-                x->mean[1] += fip[1] * weight;
-                x->mean[2] += fip[2] * weight;
-                
-                samples += weight;
-            }
+    }
+    else if(in_dimcount == 1 && in_planecount == 4){
+        for(int i = 0; i < in_minfo.dim[0]; i++){
+            fip = (float *)(in_bp + i * in_minfo.dimstride[0]);
+            weight = fip[3];
+            
+            if(weight <= 0){continue;}
+            
+            x->mean[0] += fip[0] * weight;
+            x->mean[1] += fip[1] * weight;
+            x->mean[2] += fip[2] * weight;
+            
+            samples += weight;
         }
+    }
         
-        if (samples > 0) {
-            for(int j = 0; j < 3; j++){
-                x->mean[j] /= samples;
-            }
-        }	
+    if (samples > 0) {
+        for(int j = 0; j < 3; j++){
+            x->mean[j] /= samples;
+        }
     }
 
     return err;
-}
-
-void indexToXYZ(int index, int *x, int *y, int *z, int sizeX, int sizeY) {
-    *z = index / (sizeX * sizeY);
-    int remainder = index % (sizeX * sizeY);
-    *y = remainder / sizeX;
-    *x = remainder % sizeX;
 }

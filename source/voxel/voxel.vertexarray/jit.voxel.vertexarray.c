@@ -85,7 +85,7 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
 
     in_dimcount = in_minfo.dimcount;
     in_planecount = in_minfo.planecount;
-    in_size = in_minfo.dim[0];
+    in_size = in_minfo.dim[0] * in_minfo.dim[1] * in_minfo.dim[2];
 
     for (i = 0; i < in_dimcount; i++) {
         in_dim[i] = in_minfo.dim[i];
@@ -108,38 +108,33 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
 
     in_bp = (char *)in_mdata;
     out_bp = (char *)out_mdata;
-    
-    grid_size = cbrt(in_size);
 
     fop = (float *)out_bp;
     
-    if (in_dimcount == 1 && in_planecount >= 1) {
-        for (int i = 0; i < in_size; i++) {
-            fip = (float *)(in_bp + (i * in_minfo.dimstride[0]));
-            
-            float weight = fip[0];
-            if(weight > 0){
-                indexToXYZ(i, &vox_x, &vox_y, &vox_z, grid_size, grid_size);
-                fop[i * p_count] = (float)vox_x / (grid_size - 1);
-                fop[i * p_count + 1] = (float)vox_y / (grid_size - 1);
-                fop[i * p_count + 2] = (float)vox_z / (grid_size - 1);
-                fop[i * p_count + 3] = weight;
-            }
-            else{
-                fop[i * p_count] = 0;
-                fop[i * p_count + 1] = 0;
-                fop[i * p_count + 2] = 0;
-                fop[i * p_count + 3] = 0;
+    for(vox_x = 0; vox_x < in_minfo.dim[0]; vox_x++){
+        for(vox_y = 0; vox_y < in_minfo.dim[1]; vox_y++){
+            for(vox_z = 0; vox_z < in_minfo.dim[2]; vox_z++){
+                
+                index = (vox_x + vox_y * in_minfo.dim[0] + vox_z * in_minfo.dim[1] * in_minfo.dim[1]) * in_minfo.dimstride[0];
+                
+                fip = (float *)(in_bp + index);
+                float weight = fip[0];
+                
+                if(weight > 0){
+                    fop[index] = (float)vox_x / in_minfo.dim[0] + 1.0f / in_minfo.dim[0] * .5f;
+                    fop[index + 1] = (float)vox_y / in_minfo.dim[1] + 1.0f / in_minfo.dim[1] * .5f;
+                    fop[index + 2] = (float)vox_z / in_minfo.dim[2] + 1.0f / in_minfo.dim[2] * .5f;
+                    fop[index + 3] = weight;
+                }
+                else{
+                    fop[index] = 0;
+                    fop[index + 1] = 0;
+                    fop[index + 2] = 0;
+                    fop[index + 3] = 0;
+                }
             }
         }
     }
 
     return err;
-}
-
-void indexToXYZ(int index, int *x, int *y, int *z, int sizeX, int sizeY) {
-    *z = index / (sizeX * sizeY);
-    int remainder = index % (sizeX * sizeY);
-    *y = remainder / sizeX;
-    *x = remainder % sizeX;
 }
