@@ -111,11 +111,10 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
 
     fop = (float *)out_bp;
     
-    for(vox_x = 0; vox_x < in_minfo.dim[0]; vox_x++){
+    for(vox_z = 0; vox_z < in_minfo.dim[2]; vox_z++){
         for(vox_y = 0; vox_y < in_minfo.dim[1]; vox_y++){
-            for(vox_z = 0; vox_z < in_minfo.dim[2]; vox_z++){
-                
-                index = (vox_x + vox_y * in_minfo.dim[0] + vox_z * in_minfo.dim[1] * in_minfo.dim[1]) * in_minfo.dimstride[0];
+            for(vox_x = 0; vox_x < in_minfo.dim[0]; vox_x++){
+                index = (vox_x + vox_y * in_minfo.dim[0] + vox_z * in_minfo.dim[0] * in_minfo.dim[1]) * in_minfo.dimstride[0];
                 
                 fip = (float *)(in_bp + index);
                 float weight = fip[0];

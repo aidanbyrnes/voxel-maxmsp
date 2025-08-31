@@ -46,11 +46,21 @@ void * max_pcloud2grid_new(t_symbol *s, long argc, t_atom *argv) {
         o = jit_object_new(gensym("pcloud2grid"));
 
         if (o) {
-            //We do not care about passing args to MOP
-            max_jit_mop_setup_simple(x, o, 0, NULL);
+            max_jit_obex_jitob_set(x,o);
+            max_jit_obex_dumpout_set(x,outlet_new(x,NULL));
+            max_jit_mop_setup(x);
+            max_jit_mop_inputs(x);
+            max_jit_mop_outputs(x);
             
-            if(argc > 0 && atom_gettype(argv) == A_LONG){
-                max_jit_attr_set(x, gensym("size"), argc, argv);
+            if(argc == 1){
+                t_atom args[3] = {argv, argv, argv};
+                long val = atom_getlong(argv);
+                t_atom_long dim[] = {val, val, val};
+                atom_setlong_array(3, args, 3, dim);
+                max_jit_mop_dim(x, o, 3, args);
+            }
+            else{
+                max_jit_mop_dim(x, o, 3, argv);
             }
             
             max_jit_attr_args(x, argc, argv);

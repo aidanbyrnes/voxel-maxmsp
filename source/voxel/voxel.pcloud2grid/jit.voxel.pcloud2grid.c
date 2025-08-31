@@ -2,7 +2,6 @@
 
 typedef struct _pcloud2grid {
     t_object ob;
-    long size;
     long autoclear;
     void *out_matrix;
 } t_pcloud2grid;
@@ -25,23 +24,20 @@ t_jit_err pcloud2grid_init(void) {
     _pcloud2grid_class = jit_class_new("pcloud2grid", (method)pcloud2grid_new, (method)pcloud2grid_free, sizeof(t_pcloud2grid), 0L);
 
     mop = jit_object_new(_jit_sym_jit_mop, 1, 1);
-    jit_mop_output_nolink(mop, 1);
     jit_class_addadornment(_pcloud2grid_class, mop);
+    jit_mop_single_type(mop, gensym("float32"));
+    jit_mop_single_planecount(mop, 1);
+    jit_attr_setlong(mop, _jit_sym_adapt, 0);
 
     // methods
     jit_class_addmethod(_pcloud2grid_class, (method)pcloud2grid_matrix_calc, "matrix_calc", A_CANT, 0L);
     jit_class_addmethod(_pcloud2grid_class, (method)pcloud2grid_clear, "clear", 0L); // Add the clear method
 
     // attributes
-    attr = jit_object_new(_jit_sym_jit_attr_offset, "size", _jit_sym_long, attrflags,
-                          (method)NULL, (method)NULL, calcoffset(t_pcloud2grid, size));
-    jit_class_addattr(_pcloud2grid_class, attr);
-    CLASS_ATTR_LABEL(_pcloud2grid_class, "size", 0, "Grid size");
-
     attr = jit_object_new(_jit_sym_jit_attr_offset, "autoclear", _jit_sym_long, attrflags,
                           (method)NULL, (method)NULL, calcoffset(t_pcloud2grid, autoclear));
     jit_class_addattr(_pcloud2grid_class, attr);
-    CLASS_ATTR_LABEL(_pcloud2grid_class, "autoclear", 0, "Auto clear output");
+    CLASS_ATTR_LABEL(_pcloud2grid_class, "autoclear", 0, "Auto Clear Output");
     CLASS_ATTR_STYLE(_pcloud2grid_class, "autoclear", 0, "onoff");
 
     jit_class_register(_pcloud2grid_class);
@@ -53,7 +49,6 @@ t_pcloud2grid *pcloud2grid_new(void) {
     t_pcloud2grid *x;
 
     if ((x = (t_pcloud2grid *)jit_object_alloc(_pcloud2grid_class))) {
-        x->size = 1;
         x->autoclear = 1;
         x->out_matrix = NULL;
     } else {
@@ -117,17 +112,6 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
         in_dim[i] = in_minfo.dim[i];
     }
 
-    int p_count = 1;
-
-    out_minfo.type = _jit_sym_float32;
-    out_minfo.dimcount = 3;
-    out_minfo.dim[0] = x->size;
-    out_minfo.dim[1] = x->size;
-    out_minfo.dim[2] = x->size;
-    out_minfo.planecount = p_count;
-    out_minfo.flags = 0;
-
-    jit_object_method(x->out_matrix, _jit_sym_setinfo, &out_minfo);
     jit_object_method(x->out_matrix, _jit_sym_getinfo, &out_minfo);
     jit_object_method(x->out_matrix, _jit_sym_getdata, &out_mdata);
 
@@ -144,7 +128,7 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
 
     fop = (float *)out_bp;
 
-    if (in_dimcount >= 2 && in_planecount >= 3) {
+    if (in_dimcount == 2 && in_planecount >= 3) {
         long width = in_dim[0];
         long height = in_dim[1];
 
@@ -160,7 +144,7 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
                 grid_y = MAX(0, MIN(grid_y, out_minfo.dim[1] - 1));
                 grid_z = MAX(0, MIN(grid_z, out_minfo.dim[2] - 1));
                 
-                index = grid_x + grid_y * out_minfo.dim[0] + grid_z * out_minfo.dim[1] * out_minfo.dim[1];
+                index = grid_x + grid_y * out_minfo.dim[0] + grid_z * out_minfo.dim[0] * out_minfo.dim[1];
 
                 if (index >= 0 && index < (out_minfo.dim[0] * out_minfo.dim[1] * out_minfo.dim[2])) {
                     fop[index] = 1;
