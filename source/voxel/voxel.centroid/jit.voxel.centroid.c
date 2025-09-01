@@ -60,6 +60,7 @@ t_jit_err centroid_matrix_calc(t_centroid *x, void *inputs, void *outputs) {
     t_jit_matrix_info in_minfo;
     char *in_bp;
     t_jit_object *in_matrix;
+    long savelock;
     void *in_mdata;
     float *fip;
     long in_dimcount, in_planecount, in_length;
@@ -72,6 +73,8 @@ t_jit_err centroid_matrix_calc(t_centroid *x, void *inputs, void *outputs) {
     if (!in_matrix) {
         return JIT_ERR_INVALID_INPUT;
     }
+    
+    savelock = (long)jit_object_method(inputs, _jit_sym_lock, 1);
 
     jit_object_method(in_matrix, _jit_sym_getinfo, &in_minfo);
     jit_object_method(in_matrix, _jit_sym_getdata, &in_mdata);
@@ -132,6 +135,7 @@ t_jit_err centroid_matrix_calc(t_centroid *x, void *inputs, void *outputs) {
             x->mean[j] /= samples;
         }
     }
-
+out:
+    jit_object_method(in_matrix, _jit_sym_lock, savelock);
     return err;
 }

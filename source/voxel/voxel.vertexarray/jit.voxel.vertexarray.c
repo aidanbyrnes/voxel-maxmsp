@@ -62,10 +62,10 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
     char *in_bp, *out_bp;
     long i, j, k, index;
     t_jit_object *in_matrix, *out_matrix;
+    long in_savelock, out_savelock;
     void *in_mdata, *out_mdata;
     float *fip, *fop;
     int vox_x, vox_y, vox_z;
-    int grid_size;
 
     in_matrix = jit_object_method(inputs, _jit_sym_getindex, 0);
     out_matrix = jit_object_method(outputs, _jit_sym_getindex, 0);
@@ -73,6 +73,10 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
     if (!in_matrix || !out_matrix) {
         return JIT_ERR_INVALID_INPUT;
     }
+    
+    in_savelock = (long)jit_object_method(inputs, _jit_sym_lock, 1);
+    out_savelock = (long)jit_object_method(outputs, _jit_sym_lock, 1);
+    
 
     jit_object_method(in_matrix, _jit_sym_getinfo, &in_minfo);
     jit_object_method(in_matrix, _jit_sym_getdata, &in_mdata);
@@ -125,6 +129,8 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
             }
         }
     }
-
+out:
+    jit_object_method(in_matrix, _jit_sym_lock, in_savelock);
+    jit_object_method(out_matrix, _jit_sym_lock, out_savelock);
     return err;
 }
