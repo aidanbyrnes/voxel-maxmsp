@@ -64,8 +64,6 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
     t_jit_object *in_matrix, *out_matrix;
     void *in_mdata, *out_mdata;
     float *fip, *fop;
-    long in_dimcount, in_planecount, in_dim[JIT_MATRIX_MAX_DIMCOUNT];
-    long in_size;
     int vox_x, vox_y, vox_z;
     int grid_size;
 
@@ -83,19 +81,11 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
         return JIT_ERR_INVALID_INPUT;
     }
 
-    in_dimcount = in_minfo.dimcount;
-    in_planecount = in_minfo.planecount;
-    in_size = in_minfo.dim[0] * in_minfo.dim[1] * in_minfo.dim[2];
-
-    for (i = 0; i < in_dimcount; i++) {
-        in_dim[i] = in_minfo.dim[i];
-    }
-
     int p_count = 4;
 
     out_minfo.type = _jit_sym_float32;
     out_minfo.dimcount = 1;
-    out_minfo.dim[0] = in_size;
+    out_minfo.dim[0] = in_minfo.dim[0] * in_minfo.dim[1] * in_minfo.dim[2];
     out_minfo.planecount = p_count;
     out_minfo.flags = 0;
 
@@ -111,12 +101,11 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
 
     fop = (float *)out_bp;
     
+    index = 0;
     for(vox_z = 0; vox_z < in_minfo.dim[2]; vox_z++){
         for(vox_y = 0; vox_y < in_minfo.dim[1]; vox_y++){
             for(vox_x = 0; vox_x < in_minfo.dim[0]; vox_x++){
-                index = (vox_x + vox_y * in_minfo.dim[0] + vox_z * in_minfo.dim[0] * in_minfo.dim[1]) * in_minfo.dimstride[0];
-                
-                fip = (float *)(in_bp + index);
+                fip = (float *)(in_bp + (vox_x * in_minfo.dimstride[0] + vox_y * in_minfo.dimstride[1] + vox_z * in_minfo.dimstride[2]));
                 float weight = fip[0];
                 
                 if(weight > 0){
@@ -131,6 +120,8 @@ t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs)
                     fop[index + 2] = 0;
                     fop[index + 3] = 0;
                 }
+                
+                index += p_count;
             }
         }
     }

@@ -93,12 +93,12 @@ t_jit_err centroid_matrix_calc(t_centroid *x, void *inputs, void *outputs) {
     
     in_bp = (char *)in_mdata;
     
-    if(in_dimcount == 3 && in_planecount == 1){
-        long index = 0;
+    if(in_dimcount == 3 && in_planecount == 1){ //if voxel grid
         for(vox_z = 0; vox_z < in_minfo.dim[2]; vox_z++){
             for(vox_y = 0; vox_y < in_minfo.dim[1]; vox_y++){
                 for(vox_x = 0; vox_x < in_minfo.dim[0]; vox_x++){
-                    fip = (float *)(in_bp + index * in_minfo.dimstride[0]);
+                    long index = vox_x * in_minfo.dimstride[0] + vox_y * in_minfo.dimstride[1] + vox_z * in_minfo.dimstride[2];
+                    fip = (float *)(in_bp + index);
                     weight = fip[0];
 
                     if(weight > 0){
@@ -108,13 +108,11 @@ t_jit_err centroid_matrix_calc(t_centroid *x, void *inputs, void *outputs) {
                         
                         samples += weight;
                     }
-                    
-                    index++;
                 }
             }
         }
     }
-    else if(in_dimcount == 1 && in_planecount == 4){
+    else if(in_dimcount == 1 && in_planecount == 4){ //if vertex array
         for(int i = 0; i < in_minfo.dim[0]; i++){
             fip = (float *)(in_bp + i * in_minfo.dimstride[0]);
             weight = fip[3];
