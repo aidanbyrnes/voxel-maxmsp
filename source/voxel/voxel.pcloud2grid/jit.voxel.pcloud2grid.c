@@ -84,12 +84,12 @@ void pcloud2grid_clear(t_pcloud2grid *x) {
 t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs) {
     t_jit_err err = JIT_ERR_NONE;
     t_jit_matrix_info in_minfo, out_minfo;
+    long in_savelock, out_savelock;
     char *in_bp, *out_bp;
     long i, j, k, index;
     t_jit_object *in_matrix;
     void *in_mdata, *out_mdata;
     float *fip, *fop;
-    long in_dimcount, in_planecount, in_dim[JIT_MATRIX_MAX_DIMCOUNT];
 
     in_matrix = jit_object_method(inputs, _jit_sym_getindex, 0);
     x->out_matrix = jit_object_method(outputs, _jit_sym_getindex, 0);
@@ -97,6 +97,9 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
     if (!in_matrix || !x->out_matrix) {
         return JIT_ERR_INVALID_INPUT;
     }
+    
+    in_savelock = (long)jit_object_method(inputs, _jit_sym_lock, 1);
+    out_savelock = (long)jit_object_method(outputs, _jit_sym_lock, 1);
 
     jit_object_method(in_matrix, _jit_sym_getinfo, &in_minfo);
     jit_object_method(in_matrix, _jit_sym_getdata, &in_mdata);
@@ -104,14 +107,7 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
     if (!in_mdata) {
         return JIT_ERR_INVALID_INPUT;
     }
-
-    in_dimcount = in_minfo.dimcount;
-    in_planecount = in_minfo.planecount;
-
-    for (i = 0; i < in_dimcount; i++) {
-        in_dim[i] = in_minfo.dim[i];
-    }
-
+    
     jit_object_method(x->out_matrix, _jit_sym_getinfo, &out_minfo);
     jit_object_method(x->out_matrix, _jit_sym_getdata, &out_mdata);
 
@@ -128,12 +124,9 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
 
     fop = (float *)out_bp;
 
-    if (in_dimcount == 2 && in_planecount >= 3) {
-        long width = in_dim[0];
-        long height = in_dim[1];
-
-        for (j = 0; j < height; j++) {
-            for (i = 0; i < width; i++) {
+    if (in_minfo.dimcount == 2 && in_minfo.planecount >= 3) {
+        for (j = 0; j < in_minfo.dim[0]; j++) {
+            for (i = 0; i < in_minfo.dim[1]; i++) {
                 fip = (float *)(in_bp + (j * in_minfo.dimstride[1]) + (i * in_minfo.dimstride[0]));
 
                 long grid_x = (long)(fip[0] * out_minfo.dim[0]);
@@ -149,10 +142,11 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
                 if (index >= 0 && index < (out_minfo.dim[0] * out_minfo.dim[1] * out_minfo.dim[2])) {
                     fop[index] = 1;
                 }
-                
             }
         }
     }
-
+out:
+    jit_object_method(in_matrix, _jit_sym_lock, in_savelock);
+    jit_object_method(x->out_matrix, _jit_sym_lock, out_savelock);
     return err;
 }
