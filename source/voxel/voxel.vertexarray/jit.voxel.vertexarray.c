@@ -17,8 +17,6 @@ END_USING_C_LINKAGE
 static void *_vertexarray_class = NULL;
 
 t_jit_err vertexarray_init(void) {
-    long attrflags = JIT_ATTR_GET_DEFER_LOW | JIT_ATTR_SET_USURP_LOW;
-    t_jit_object *attr;
     t_jit_object *mop;
 
     _vertexarray_class = jit_class_new("vertexarray", (method)vertexarray_new, (method)vertexarray_free, sizeof(t_vertexarray), 0L);
@@ -30,27 +28,13 @@ t_jit_err vertexarray_init(void) {
     // methods
     jit_class_addmethod(_vertexarray_class, (method)vertexarray_matrix_calc, "matrix_calc", A_CANT, 0L);
 
-    // attributes
-    attr = jit_object_new(_jit_sym_jit_attr_offset, "size", _jit_sym_long, attrflags,
-                          (method)NULL, (method)NULL, calcoffset(t_vertexarray, size));
-    jit_class_addattr(_vertexarray_class, attr);
-    CLASS_ATTR_LABEL(_vertexarray_class, "size", 0, "Grid size");
-
     jit_class_register(_vertexarray_class);
 
     return JIT_ERR_NONE;
 }
 
 t_vertexarray *vertexarray_new(void) {
-    t_vertexarray *x;
-
-    if ((x = (t_vertexarray *)jit_object_alloc(_vertexarray_class))) {
-        x->size = 1;
-    } else {
-        x = NULL;
-    }
-
-    return x;
+    return (t_vertexarray *)jit_object_alloc(_vertexarray_class);
 }
 
 void vertexarray_free(t_vertexarray *x) {

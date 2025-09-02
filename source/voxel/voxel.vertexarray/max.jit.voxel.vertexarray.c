@@ -46,14 +46,11 @@ void * max_vertexarray_new(t_symbol *s, long argc, t_atom *argv) {
         o = jit_object_new(gensym("vertexarray"));
 
         if (o) {
-            //We do not care about passing args to MOP
-            max_jit_mop_setup_simple(x, o, 0, NULL);
-            
-            if(argc > 0 && atom_gettype(argv) == A_LONG){
-                max_jit_attr_set(x, gensym("size"), argc, argv);
-            }
-            
-            max_jit_attr_args(x, argc, argv);
+            max_jit_obex_jitob_set(x,o);
+            max_jit_obex_dumpout_set(x,outlet_new(x,NULL));
+            max_jit_mop_setup(x);
+            max_jit_mop_inputs(x);
+            max_jit_mop_outputs(x);
         } else {
             jit_object_error((t_object *)x, "voxel.vertexarray: could not allocate object");
             object_free((t_object *)x);
@@ -74,7 +71,7 @@ void max_jit_freenect2_assist(t_max_vertexarray *x, void *b, long msg, long arg,
     if (msg == ASSIST_OUTLET) {
         switch (arg) {
             case 0:
-                sprintf(s, "(matrix) voxel grid");
+                sprintf(s, "(matrix) vertex array");
                 break;
 
             default:
