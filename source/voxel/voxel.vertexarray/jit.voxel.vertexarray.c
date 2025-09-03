@@ -11,7 +11,6 @@ t_vertexarray *vertexarray_new(void);
 void vertexarray_free(t_vertexarray *x);
 t_jit_err vertexarray_matrix_calc(t_vertexarray *x, void *inputs, void *outputs);
 void vertexarray_clear(t_vertexarray *x);
-void indexToXYZ(int index, int *x, int *y, int *z, int sizeX, int sizeY);
 END_USING_C_LINKAGE
 
 static void *_vertexarray_class = NULL;
