@@ -66,16 +66,20 @@ void pcloud2grid_clear(t_pcloud2grid *x) {
         t_jit_matrix_info out_minfo;
         char *out_bp;
         float *fop;
-        long i, size;
+        int vox_x, vox_y, vox_z;
 
         jit_object_method(x->out_matrix, _jit_sym_getinfo, &out_minfo);
         jit_object_method(x->out_matrix, _jit_sym_getdata, &out_bp);
 
         if (out_bp) {
-            size = out_minfo.dim[0] * out_minfo.dim[1] * out_minfo.dim[2];
-            fop = (float *)out_bp;
-            for (i = 0; i < size; i++) {
-                fop[i] = 0.0f;
+            for(vox_z = 0; vox_z < out_minfo.dim[2]; vox_z++){
+                for(vox_y = 0; vox_y < out_minfo.dim[1]; vox_y++){
+                    for(vox_x = 0; vox_x < out_minfo.dim[0]; vox_x++){
+                        long index = vox_x * out_minfo.dimstride[0] + vox_y * out_minfo.dimstride[1] + vox_z * out_minfo.dimstride[2];
+                        fop = (float *)(out_bp + index);
+                        fop[0] = 0.0f;
+                    }
+                }
             }
         }
     }
@@ -122,8 +126,6 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
         pcloud2grid_clear(x);
     }
 
-    fop = (float *)out_bp;
-
     if (in_minfo.dimcount == 2 && in_minfo.planecount >= 3) {
         for (j = 0; j < in_minfo.dim[0]; j++) {
             for (i = 0; i < in_minfo.dim[1]; i++) {
@@ -137,10 +139,11 @@ t_jit_err pcloud2grid_matrix_calc(t_pcloud2grid *x, void *inputs, void *outputs)
                 grid_y = MAX(0, MIN(grid_y, out_minfo.dim[1] - 1));
                 grid_z = MAX(0, MIN(grid_z, out_minfo.dim[2] - 1));
                 
-                index = grid_x + grid_y * out_minfo.dim[0] + grid_z * out_minfo.dim[0] * out_minfo.dim[1];
+                index = grid_x * out_minfo.dimstride[0] + grid_y * out_minfo.dimstride[1] + grid_z * out_minfo.dimstride[2];
+                fop = (float *)(out_bp + index);
 
-                if (index >= 0 && index < (out_minfo.dim[0] * out_minfo.dim[1] * out_minfo.dim[2])) {
-                    fop[index] = 1;
+                if (index >= 0) {
+                    fop[0] = 1;
                 }
             }
         }

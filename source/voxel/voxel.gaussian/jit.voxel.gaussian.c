@@ -149,8 +149,8 @@ void *gaussian_thread_worker(void *arg) {
     for (long vox_z = data->start_slice; vox_z <= data->end_slice; vox_z++) {
         for (long vox_y = 0; vox_y < dim[1]; vox_y++) {
             for (long vox_x = 0; vox_x < dim[0]; vox_x++) {
-                long out_index = vox_x * stride[0] + vox_y * stride[1] + vox_z * stride[2];
-                float *fop = (float *)(out_bp + out_index);
+                long index = vox_x * stride[0] + vox_y * stride[1] + vox_z * stride[2];
+                float *fop = (float *)(out_bp + index);
                 fop[0] = convolve(x, in_bp, dim, stride, vox_x, vox_y, vox_z);
             }
         }
@@ -253,8 +253,7 @@ t_jit_err gaussian_matrix_calc(t_gaussian *x, void *inputs, void *outputs) {
                 for (long vox_x = 0; vox_x < in_minfo.dim[0]; vox_x++) {
                     long index = vox_x * in_minfo.dimstride[0] + vox_y * in_minfo.dimstride[1] + vox_z * in_minfo.dimstride[2];
                     float *fop = (float *)(out_bp + index);
-                    fop[0] = convolve(x, in_bp, in_minfo.dim, in_minfo.dimstride,
-                                      vox_x, vox_y, vox_z);
+                    fop[0] = convolve(x, in_bp, in_minfo.dim, in_minfo.dimstride, vox_x, vox_y, vox_z);
                 }
             }
         }
