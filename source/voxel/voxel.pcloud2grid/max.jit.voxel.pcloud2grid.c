@@ -52,16 +52,28 @@ void * max_pcloud2grid_new(t_symbol *s, long argc, t_atom *argv) {
             max_jit_mop_inputs(x);
             max_jit_mop_outputs(x);
             
-            if(argc == 1){
-                t_atom args[3] = {argv, argv, argv};
-                long val = atom_getlong(argv);
-                t_atom_long dim[] = {val, val, val};
-                atom_setlong_array(3, args, 3, dim);
-                max_jit_mop_dim(x, o, 3, args);
+            //process args
+            t_atom dim_args[3];
+            t_atom_long dim[3] = {1, 1, 1};
+            int valid_argc = 0;
+            for(int i = 0; i < MIN(argc, 3); i++){
+                if(atom_gettype(&argv[i]) == A_LONG){
+                    dim[i] = atom_getlong(&argv[i]);
+                    valid_argc++;
+                }
+                else{
+                    break;
+                }
             }
-            else{
-                max_jit_mop_dim(x, o, 3, argv);
+            
+            //if one arg, make cubic
+            if(valid_argc == 1){
+                dim[1] = dim[0];
+                dim[2] = dim[0];
             }
+            
+            atom_setlong_array(3, dim_args, 3, dim);
+            max_jit_mop_dim(x, o, 3, dim_args);
             
             max_jit_attr_args(x, argc, argv);
         } else {
